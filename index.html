@@ -189,6 +189,7 @@ legend{font-weight:600;font-size:16px;padding:0;margin-bottom:10px}
 .confetti{position:absolute;inset:0;overflow:hidden;pointer-events:none;z-index:3}
 .confetti i{position:absolute;top:-24px;border-radius:2px;opacity:0;animation-name:confettiFall;animation-timing-function:linear;animation-fill-mode:forwards}
 @keyframes confettiFall{0%{opacity:1;transform:translateY(0) rotate(0)}100%{opacity:1;transform:translateY(110vh) rotate(var(--r,360deg))}}
+.ver{margin:26px 0 0;font-size:13px;color:var(--muted)}
 </style>
 </head>
 <body>
@@ -226,6 +227,7 @@ legend{font-weight:600;font-size:16px;padding:0;margin-bottom:10px}
       </div>
       <div id="rounds"></div>
       <p class="hint">Tap a picture to see how it's done. Swap replaces just that exercise, and Back returns to the one you had before the swap.</p>
+      <p class="ver">Version 11</p>
     </section>
   </div>
 </main>
@@ -1419,6 +1421,16 @@ renderControls();
 deal();
 })();
 </script>
-<script>if("serviceWorker" in navigator&&/^https?:/.test(location.protocol)){window.addEventListener("load",function(){navigator.serviceWorker.register("sw.js").catch(function(){});});}</script>
+<script>
+if("serviceWorker" in navigator&&/^https?:/.test(location.protocol)){
+  var hadController=!!navigator.serviceWorker.controller,reloaded=false;
+  navigator.serviceWorker.addEventListener("controllerchange",function(){
+    if(hadController&&!reloaded){reloaded=true;location.reload();}
+  });
+  window.addEventListener("load",function(){
+    navigator.serviceWorker.register("sw.js").then(function(r){r.update();}).catch(function(){});
+  });
+}
+</script>
 </body>
 </html>

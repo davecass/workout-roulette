@@ -1,9 +1,12 @@
-/* Workout Roulette service worker: cache the app and fonts so it works offline.
-   Bump CACHE (for example to workout-roulette-v11) whenever you change index.html. */
-var CACHE="workout-roulette-v10";
+/* Workout Roulette service worker: keeps the app working offline.
+   The app page is fetched from the network first so updates show up as soon as you are online,
+   and the saved copy is used only when you are offline. Bump CACHE whenever you change index.html. */
+var CACHE="workout-roulette-v11";
 var CORE=["./","./index.html","./manifest.webmanifest","./icon-192.png","./icon-512.png"];
 self.addEventListener("install",function(e){
-  e.waitUntil(caches.open(CACHE).then(function(c){return c.addAll(CORE);}).then(function(){return self.skipWaiting();}));
+  e.waitUntil(caches.open(CACHE).then(function(c){
+    return c.addAll(CORE.map(function(u){return new Request(u,{cache:"reload"});}));
+  }).then(function(){return self.skipWaiting();}));
 });
 self.addEventListener("activate",function(e){
   e.waitUntil(caches.keys().then(function(keys){
@@ -16,13 +19,23 @@ self.addEventListener("fetch",function(e){
   var url=new URL(req.url);
   var isFont=url.hostname==="fonts.googleapis.com"||url.hostname==="fonts.gstatic.com";
   if(url.origin!==location.origin&&!isFont) return;
+  var isPage=req.mode==="navigate"||/\/$/.test(url.pathname)||/index\.html$/.test(url.pathname)||/manifest\.webmanifest$/.test(url.pathname);
+  if(isPage){
+    e.respondWith(
+      fetch(new Request(req.url,{cache:"no-store",credentials:"same-origin"})).then(function(res){
+        if(res&&res.ok){var copy=res.clone();caches.open(CACHE).then(function(c){c.put(req,copy);});}
+        return res;
+      }).catch(function(){
+        return caches.match(req).then(function(hit){return hit||caches.match("./index.html");});
+      })
+    );
+    return;
+  }
   e.respondWith(caches.match(req).then(function(hit){
     var net=fetch(req).then(function(res){
       if(res&&(res.ok||res.type==="opaque")){var copy=res.clone();caches.open(CACHE).then(function(c){c.put(req,copy);});}
       return res;
-    }).catch(function(){
-      return hit||(req.mode==="navigate"?caches.match("./index.html"):undefined);
-    });
+    }).catch(function(){return hit;});
     return hit||net;
   }));
 });
