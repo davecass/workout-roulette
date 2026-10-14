@@ -1,6 +1,6 @@
 /* Workout Roulette service worker: cache the app and fonts so it works offline.
-   Bump CACHE (for example to workout-roulette-v2) whenever you change index.html. */
-var CACHE="workout-roulette-v1";
+   Bump CACHE (for example to workout-roulette-v11) whenever you change index.html. */
+var CACHE="workout-roulette-v10";
 var CORE=["./","./index.html","./manifest.webmanifest","./icon-192.png","./icon-512.png"];
 self.addEventListener("install",function(e){
   e.waitUntil(caches.open(CACHE).then(function(c){return c.addAll(CORE);}).then(function(){return self.skipWaiting();}));

@@ -68,7 +68,7 @@ legend{font-weight:600;font-size:16px;padding:0;margin-bottom:10px}
 .bar{display:flex;flex-wrap:wrap;gap:16px;align-items:center;justify-content:space-between;margin-bottom:22px}
 #summary{margin:0;font-size:18px;max-width:34ch}
 .actions{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
-.deal{font-family:var(--display);font-weight:700;font-size:30px;line-height:1;background:var(--accent);color:var(--accent-ink);border:0;border-radius:10px;padding:14px 26px;box-shadow:0 4px 0 rgba(0,0,0,.28);transition:transform .08s,box-shadow .08s}
+.deal{perspective:500px;font-family:var(--display);font-weight:700;font-size:30px;line-height:1;background:var(--accent);color:var(--accent-ink);border:0;border-radius:10px;padding:14px 26px;box-shadow:0 4px 0 rgba(0,0,0,.28);transition:transform .08s,box-shadow .08s}
 .deal:active:not(:disabled){transform:translateY(3px);box-shadow:0 1px 0 rgba(0,0,0,.28)}
 .deal:disabled{opacity:.45;box-shadow:none}
 .start{font-family:var(--display);font-weight:700;font-size:26px;line-height:1;background:var(--ink);color:var(--bg);border:0;border-radius:10px;padding:15px 22px}
@@ -175,6 +175,20 @@ legend{font-weight:600;font-size:16px;padding:0;margin-bottom:10px}
 .list li[data-g] .num{color:var(--gc)}
 .list li[data-g] .thumb{border-color:var(--gc)}
 .player[data-kind="work"][data-g]{background:var(--gp)}
+.slH{font-size:16px;margin:16px 0 8px}
+.slRow{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:8px}
+.slLabel{display:block;font-size:14px;color:var(--muted);margin:12px 0 4px}
+#slCode,#slOut{width:100%;font:inherit;font-size:15px;padding:8px 10px;border:1.5px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink);resize:vertical}
+#slMsg{min-height:1.4em;margin:10px 0 0;font-size:15px}
+@keyframes wordSpin{0%{transform:rotateX(0)}100%{transform:rotateX(360deg)}}
+.deal .w{display:inline-block}
+.deal.spinning .w{animation:wordSpin .7s cubic-bezier(.45,.05,.2,1) both;animation-delay:calc(var(--i,0) * 110ms)}
+@media (prefers-reduced-motion: reduce){.deal.spinning .w{animation:none}}
+.mini:disabled{opacity:.4;cursor:default}
+.player[data-kind="round"]{background:#0F6B4F}
+.confetti{position:absolute;inset:0;overflow:hidden;pointer-events:none;z-index:3}
+.confetti i{position:absolute;top:-24px;border-radius:2px;opacity:0;animation-name:confettiFall;animation-timing-function:linear;animation-fill-mode:forwards}
+@keyframes confettiFall{0%{opacity:1;transform:translateY(0) rotate(0)}100%{opacity:1;transform:translateY(110vh) rotate(var(--r,360deg))}}
 </style>
 </head>
 <body>
@@ -196,6 +210,7 @@ legend{font-weight:600;font-size:16px;padding:0;margin-bottom:10px}
         <legend>Each round</legend>
         <div class="chips" id="sameChips"></div>
       </fieldset>
+      <fieldset><legend>Sound</legend><div class="chips" id="soundChips"></div></fieldset>
       <p class="log" id="log"></p>
     </section>
 
@@ -203,18 +218,43 @@ legend{font-weight:600;font-size:16px;padding:0;margin-bottom:10px}
       <div class="bar">
         <p id="summary"></p>
         <div class="actions">
-          <button type="button" class="deal" id="deal">Deal workout</button>
+          <button type="button" class="deal" id="deal"><span class="w">Spin</span> <span class="w">for</span> <span class="w">workout</span></button>
           <button type="button" class="start" id="start">Start</button>
-          <button type="button" class="ghost" id="copy">Copy list</button>
+          <button type="button" class="ghost" id="saveBtn">Save workout</button>
+          <button type="button" class="ghost" id="loadBtn">Load workout</button>
         </div>
       </div>
       <div id="rounds"></div>
-      <p class="hint">Tap a picture to see how it's done. Hold keeps an exercise when you deal again, and Swap replaces just that one.</p>
+      <p class="hint">Tap a picture to see how it's done. Swap replaces just that exercise, and Back returns to the one you had before the swap.</p>
     </section>
   </div>
 </main>
 
 <div id="toast" role="status" aria-live="polite"></div>
+
+<div class="how" id="sl" role="dialog" aria-modal="true" aria-labelledby="slTitle" hidden>
+  <div class="howCard">
+    <div class="howHead"><h2 id="slTitle">Save workout</h2><button type="button" class="mini" id="slClose">Close</button></div>
+    <p class="howNote" id="slNote"></p>
+    <div id="slSaveBox">
+      <div class="slRow">
+        <button type="button" class="ghost" id="slSave">Save to a file</button>
+        <button type="button" class="ghost" id="slCopy">Copy a code</button>
+      </div>
+      <textarea id="slOut" rows="3" readonly hidden spellcheck="false"></textarea>
+    </div>
+    <div id="slLoadBox" hidden>
+      <div class="slRow">
+        <button type="button" class="ghost" id="slPick">Choose a saved file</button>
+        <input type="file" id="slFile" accept=".json,application/json,text/plain" hidden>
+      </div>
+      <label class="slLabel" for="slCode">Or paste a saved code</label>
+      <textarea id="slCode" rows="3" spellcheck="false" autocomplete="off"></textarea>
+      <div class="slRow" style="margin-top:8px"><button type="button" class="start" id="slLoad" style="font-size:22px;padding:12px 18px">Load code</button></div>
+    </div>
+    <p id="slMsg" role="status" aria-live="polite"></p>
+  </div>
+</div>
 
 <div class="how" id="how" role="dialog" aria-modal="true" aria-labelledby="howName" hidden>
   <div class="howCard">
@@ -226,6 +266,7 @@ legend{font-weight:600;font-size:16px;padding:0;margin-bottom:10px}
 </div>
 
 <div class="player" id="player" role="dialog" aria-modal="true" aria-labelledby="pName" hidden>
+  <div class="confetti" id="confetti" aria-hidden="true"></div>
   <div class="pbar"><span id="pProg"></span></div>
   <div class="ptop"><span class="phase" id="pPhase"></span>
     <div style="display:flex;gap:8px">
@@ -828,6 +869,11 @@ function closeHow(){
 
 /* ---------- Fixed workout format ---------- */
 var WORK=45, REST=15, ROUNDS=4, SLOTS=5;
+var CHEERS=[
+  ["Round 1 done. Great start!","One down, three to go. Nice work!","Warmed up and rolling. Keep going!"],
+  ["Halfway there. Keep it up!","Two rounds down. You're on a roll!","Halfway! Stay strong."],
+  ["One round to go. You've got this!","Final round next. Finish strong!","Almost there. Give it everything!"]
+];
 
 /* ---------- Data ---------- */
 var AREAS=[
@@ -893,7 +939,7 @@ var EX=[
 ];
 
 /* ---------- State ---------- */
-var S={focus:["cardio","legs","chest","back","abs"],equip:[],same:false};
+var S={focus:["cardio","legs","chest","back","abs"],equip:[],same:false,sound:true};
 var workout=[];          // array of rounds; each round is an array of {ex, held}
 var freshSet={};
 var STORE="dealt:v2",LOGKEY="dealt:log";
@@ -910,6 +956,7 @@ function load(){
     }
     if(Array.isArray(o.equip)) S.equip=o.equip.filter(function(e){return EQUIP.some(function(q){return q.id===e;});});
     if(typeof o.same==="boolean") S.same=o.same;
+    if(typeof o.sound==="boolean") S.sound=o.sound;
   }catch(e){}
 }
 function save(){try{localStorage.setItem(STORE,JSON.stringify(S));}catch(e){}}
@@ -976,14 +1023,28 @@ function swap(r,s){
   var fresh=all.filter(function(x){return !col[x.n];});
   var c=fresh.length?fresh:all;
   if(!c.length){toast("No other exercises match your equipment.");return;}
-  workout[r][s]={ex:pick(c),held:false};
+  var old=workout[r][s];
+  workout[r][s]={ex:pick(c),held:false,prev:(old.prev||[]).concat([cur]).slice(-10)};
   freshSet={};freshSet[r+"-"+s]=1;
   render();
+}
+function unswap(r,s){
+  var w=workout[r]&&workout[r][s];
+  if(!w||!w.prev||!w.prev.length) return false;
+  var inRound={};
+  workout[r].forEach(function(x,i){if(i!==s) inRound[x.ex.n]=1;});
+  var prev=w.prev.slice(),ex=null;
+  while(prev.length){var c=prev.pop();if(!inRound[c.n]){ex=c;break;}}
+  if(!ex){toast("That exercise is already in this round.");return false;}
+  workout[r][s]={ex:ex,held:false,prev:prev};
+  freshSet={};freshSet[r+"-"+s]=1;
+  render();
+  return true;
 }
 
 /* ---------- Rendering ---------- */
 function summaryText(){
-  if(!ready()) return "Choose a focus for each of the 5 exercises to deal a workout.";
+  if(!ready()) return "Choose a focus for each of the 5 exercises to spin a workout.";
   var total=ROUNDS*SLOTS*(WORK+REST)-REST;
   return ROUNDS+" rounds of "+SLOTS+" exercises, "+WORK+" seconds on and "+REST+" off. About "+Math.round(total/60)+" minutes.";
 }
@@ -1014,6 +1075,7 @@ function renderControls(){
   $("equipChips").innerHTML='<button type="button" class="chip" aria-pressed="true" disabled title="Always included">Bodyweight</button>'+
     EQUIP.map(function(e){return chip("data-equip",e.id,e.label,S.equip.indexOf(e.id)>-1);}).join("");
   $("sameChips").innerHTML=chip("data-same","new","New exercises",!S.same)+chip("data-same","same","Same five",S.same);
+  $("soundChips").innerHTML=chip("data-sound","on","Sounds on",S.sound)+chip("data-sound","off","Sounds off",!S.sound);
   var log=getLog();
   if(log.length){
     var last=new Date(log[log.length-1].d);
@@ -1024,7 +1086,7 @@ function renderControls(){
 function render(){
   $("summary").textContent=summaryText();
   var ok=workout.length>0;
-  $("start").disabled=!ok;$("copy").disabled=!ok;$("deal").disabled=!ready();
+  $("start").disabled=!ok;$("saveBtn").disabled=!ok;$("deal").disabled=!ready();
   if(!ok){
     $("rounds").innerHTML='<p class="empty">Choose a focus for each exercise to see your workout.</p>';
     return;
@@ -1035,13 +1097,14 @@ function render(){
     return '<section class="round"><h3 class="roundTitle">'+title+'</h3>'+(sub?'<p class="roundSub">'+sub+'</p>':'')+
       '<ol class="list">'+rd.map(function(w,s){
         var fresh=freshSet[r+"-"+s]?' fresh" style="--d:'+(r*SLOTS+s):'';
+        var pv=w.prev&&w.prev.length?w.prev[w.prev.length-1].n:"";
         return '<li data-g="'+w.ex.g+'" class="'+(w.held?"held":"")+fresh+'">'+
           '<span class="num" aria-hidden="true">'+(s+1)+'</span>'+
           '<button type="button" class="thumb" data-act="how" data-r="'+r+'" data-s="'+s+'" aria-label="How to do '+w.ex.n+'">'+figSvg(w.ex.n,null,1)+'</button>'+
           '<div><h4 class="name">'+w.ex.n+'</h4><p class="sub">'+LABEL[w.ex.g]+', '+EQLBL[w.ex.eq]+'</p></div>'+
           '<div class="rowEnd"><div class="rx"><b>'+WORK+'s</b>'+(w.ex.s?'<span>Switch sides halfway</span>':'')+'</div>'+
           '<div class="rowActs">'+
-            '<button type="button" class="mini" data-act="hold" data-r="'+r+'" data-s="'+s+'" aria-pressed="'+w.held+'" aria-label="Hold '+w.ex.n+'">'+(w.held?"Held":"Hold")+'</button>'+
+            '<button type="button" class="mini" data-act="back" data-r="'+r+'" data-s="'+s+'"'+(pv?'':' disabled')+' aria-label="'+(pv?'Go back to '+pv:'Go back (no swap to undo)')+'">Back</button>'+
             '<button type="button" class="mini" data-act="swap" data-r="'+r+'" data-s="'+s+'" aria-label="Swap '+w.ex.n+'">Swap</button>'+
           '</div></div></li>';
       }).join("")+'</ol></section>';
@@ -1062,43 +1125,25 @@ document.addEventListener("click",function(e){
     if(k>-1) S.equip.splice(k,1);else S.equip.push(q);
     save();renderControls();deal();return;
   }
+  if(t.dataset.sound){S.sound=t.dataset.sound==="on";P.sound=S.sound;save();renderControls();if(S.sound) ensureAudio();return;}
   if(t.dataset.same){
     S.same=t.dataset.same==="same";save();renderControls();
     workout=[];deal();return;
   }
   if(t.dataset.act==="how"){openHow(+t.dataset.r,+t.dataset.s,t);return;}
-  if(t.dataset.act==="hold"){
-    var r=+t.dataset.r,s=+t.dataset.s;
-    workout[r][s].held=!workout[r][s].held;render();refocus("hold",r,s);return;
+  if(t.dataset.act==="back"){
+    var rb=+t.dataset.r,sb=+t.dataset.s;
+    if(unswap(rb,sb)){
+      var left=workout[rb][sb].prev&&workout[rb][sb].prev.length;
+      refocus(left?"back":"swap",rb,sb);
+    }
+    return;
   }
   if(t.dataset.act==="swap"){
     var r2=+t.dataset.r,s2=+t.dataset.s;
     swap(r2,s2);refocus("swap",r2,s2);return;
   }
 });
-$("deal").addEventListener("click",deal);
-$("copy").addEventListener("click",function(){
-  var lines=[];
-  workout.forEach(function(rd,r){
-    lines.push(S.same?("Rounds 1 to "+ROUNDS+" (repeat)"):("Round "+(r+1)));
-    rd.forEach(function(w,s){lines.push((s+1)+". "+w.ex.n+" ("+LABEL[w.ex.g]+")"+(w.ex.s?" - switch sides halfway":""));});
-    lines.push("");
-  });
-  var text="Workout: "+summaryText()+"\n\n"+lines.join("\n").trim();
-  function fallback(){
-    try{
-      var ta=document.createElement("textarea");ta.value=text;ta.style.position="fixed";ta.style.opacity="0";
-      document.body.appendChild(ta);ta.select();var ok=document.execCommand("copy");document.body.removeChild(ta);
-      toast(ok?"Workout copied.":"Couldn't copy. Select the list and copy it manually.");
-    }catch(err){toast("Couldn't copy. Select the list and copy it manually.");}
-  }
-  try{
-    if(navigator.clipboard&&navigator.clipboard.writeText){
-      navigator.clipboard.writeText(text).then(function(){toast("Workout copied.");},fallback);
-    }else fallback();
-  }catch(err){fallback();}
-});
-
 /* ---------- Player ---------- */
 var P={steps:[],i:0,end:0,left:0,paused:false,iv:null,sound:true,t0:0,done:false,lock:null,opener:null};
 var ac=null;
@@ -1110,9 +1155,9 @@ function beep(f,d){
 function buildSteps(){
   var steps=[{kind:"ready",name:"Get ready",sec:5,set:"",note:""}];
   roundsToPlay().forEach(function(rd,ri){
-    rd.forEach(function(w){
+    rd.forEach(function(w,si){
       steps.push({kind:"work",g:w.ex.g,name:w.ex.n,sec:WORK,set:"Round "+(ri+1)+" of "+ROUNDS+", "+LABEL[w.ex.g],note:w.ex.s?"switch sides halfway":""});
-      steps.push({kind:"rest",name:"Rest",sec:REST,set:"",note:""});
+      steps.push({kind:"rest",name:"Rest",sec:REST,set:"",note:"",done:(si===rd.length-1&&ri<ROUNDS-1)?ri+1:0});
     });
   });
   if(steps[steps.length-1].kind==="rest") steps.pop();
@@ -1126,11 +1171,12 @@ function buildSteps(){
 function renderBig(){$("pBig").textContent=String(P.left);}
 function enterStep(){
   var st=P.steps[P.i];
-  $("player").dataset.kind=st.kind;
+  $("player").dataset.kind=st.done?"round":st.kind;
   if(st.g){$("player").dataset.g=st.g;}else{delete $("player").dataset.g;}
-  $("pPhase").textContent=st.kind==="work"?"Work":(st.kind==="rest"?"Rest":"Get ready");
-  $("pName").textContent=st.kind==="work"?st.name:(st.kind==="rest"?"Rest":"Get ready");
-  $("pSet").textContent=st.kind==="work"?st.set+(st.note?", "+st.note:""):"";
+  var cheer=st.done?CHEERS[st.done-1][Math.floor(Math.random()*CHEERS[st.done-1].length)]:"";
+  $("pPhase").textContent=st.done?"Round "+st.done+" complete":(st.kind==="work"?"Work":(st.kind==="rest"?"Rest":"Get ready"));
+  $("pName").textContent=st.done?cheer:(st.kind==="work"?st.name:(st.kind==="rest"?"Rest":"Get ready"));
+  $("pSet").textContent=st.kind==="work"?st.set+(st.note?", "+st.note:""):(st.done?"Rest and get ready for round "+(st.done+1)+".":"");
   $("pNext").textContent=st.next?(st.kind==="work"?"Next: ":"Up next: ")+st.next:"Last one. Finish strong.";
   $("pProg").style.width=(P.i/P.steps.length*100)+"%";
   var fname=st.kind==="work"?st.name:st.next;
@@ -1139,7 +1185,8 @@ function enterStep(){
   P.paused=false;$("pPause").textContent="Pause";
   P.left=st.sec;P.end=Date.now()+P.left*1000;
   renderBig();
-  if(P.i>0) beep(st.kind==="work"?880:520,.18);
+  if(st.done){beep(660,.14);setTimeout(function(){beep(880,.2);},140);launchConfetti(18,3200);}
+  else if(P.i>0) beep(st.kind==="work"?880:520,.18);
 }
 function tick(){
   if(P.paused||P.done) return;
@@ -1158,6 +1205,7 @@ function unlockScreen(){try{if(P.lock){P.lock.release();P.lock=null;}}catch(e){}
 function startPlayer(){
   if(!workout.length) return;
   ensureAudio();
+  $("pSound").setAttribute("aria-pressed",String(P.sound));$("pSound").textContent=P.sound?"Sound on":"Sound off";
   P.steps=buildSteps();P.i=0;P.done=false;P.t0=Date.now();P.opener=document.activeElement;
   $("pCtl").hidden=false;$("pDone").hidden=true;
   $("player").hidden=false;
@@ -1170,6 +1218,7 @@ function startPlayer(){
 function closePlayer(){
   clearInterval(P.iv);P.iv=null;unlockScreen();
   $("player").hidden=true;document.body.style.overflow="";
+  $("confetti").innerHTML="";
   renderControls();
   if(P.opener&&P.opener.focus) P.opener.focus();
 }
@@ -1179,15 +1228,31 @@ function finish(){
   addLog({d:new Date().toISOString(),focus:S.focus.join(",")});
   $("player").dataset.kind="done";
   $("pFig").innerHTML="";mountFigs();
+  var count=getLog().length,titles=["Jackpot!","You crushed it!","Winner, winner!","Nailed it!","All in, and it paid off!"];
   $("pPhase").textContent="Finished";
-  $("pName").textContent="Workout complete";
-  $("pSet").textContent=ROUNDS*SLOTS+" exercises, total time";
-  $("pBig").textContent=fmt(secs);
-  $("pNext").textContent="";
+  $("pName").textContent=titles[Math.floor(Math.random()*titles.length)];
+  $("pSet").textContent=ROUNDS*SLOTS+" exercises in "+fmt(secs)+". All "+ROUNDS+" rounds done.";
+  $("pBig").textContent="\uD83C\uDFC6";
+  $("pNext").textContent=count>1?"That's workout number "+count+". Time to stretch and hydrate.":"Your first workout is in the books. Time to stretch and hydrate.";
   $("pProg").style.width="100%";
   $("pCtl").hidden=true;
   $("pDone").hidden=false;$("pDone").focus();
-  beep(880,.15);setTimeout(function(){beep(1100,.25);},180);
+  [[523,0],[659,130],[784,260],[1047,400]].forEach(function(n){setTimeout(function(){beep(n[0],.22);},n[1]);});
+  setTimeout(function(){beep(1319,.5);},560);
+  launchConfetti();
+}
+var confettiTok=0;
+function launchConfetti(n,ms){
+  n=n||56;ms=ms||6500;
+  var tok=++confettiTok,box=$("confetti");box.innerHTML="";
+  if(REDUCE) return;
+  var cols=["#FFE08A","#FF6B3D","#7FA2FF","#6FE39A","#F78FD0","#ffffff"],html="";
+  for(var i=0;i<n;i++){
+    var sz=6+Math.random()*7;
+    html+='<i style="left:'+(Math.random()*100).toFixed(1)+'%;width:'+sz.toFixed(1)+'px;height:'+(sz*1.6).toFixed(1)+'px;background:'+cols[i%cols.length]+';animation-delay:'+(Math.random()*1.2).toFixed(2)+'s;animation-duration:'+(2.4+Math.random()*1.8).toFixed(2)+'s;--r:'+Math.floor(Math.random()*720-360)+'deg"></i>';
+  }
+  box.innerHTML=html;
+  setTimeout(function(){if(tok===confettiTok) box.innerHTML="";},ms);
 }
 $("start").addEventListener("click",startPlayer);
 $("pBack").addEventListener("click",back);
@@ -1196,22 +1261,154 @@ $("pPause").addEventListener("click",togglePause);
 $("pDone").addEventListener("click",closePlayer);
 $("pEnd").addEventListener("click",closePlayer);
 $("pSound").addEventListener("click",function(){
-  P.sound=!P.sound;this.setAttribute("aria-pressed",String(P.sound));this.textContent=P.sound?"Sound on":"Sound off";
+  P.sound=!P.sound;S.sound=P.sound;save();this.setAttribute("aria-pressed",String(P.sound));this.textContent=P.sound?"Sound on":"Sound off";
   if(P.sound) ensureAudio();
 });
 $("howClose").addEventListener("click",closeHow);
 $("how").addEventListener("click",function(e){if(e.target===this) closeHow();});
 document.addEventListener("keydown",function(e){
   if(e.key!=="Escape") return;
-  if(!$("how").hidden) closeHow();
+  if(!$("sl").hidden) closeSL();
+  else if(!$("how").hidden) closeHow();
   else if(!$("player").hidden) closePlayer();
 });
 document.addEventListener("visibilitychange",function(){
   if(!document.hidden&&!$("player").hidden&&!P.done&&!P.lock) lockScreen();
 });
 
+/* ---------- Spin ---------- */
+var spinning=false;
+function tickSound(f){
+  if(!P.sound||!ac) return;
+  try{
+    var o=ac.createOscillator(),g=ac.createGain(),t=ac.currentTime;
+    o.type="square";o.frequency.value=f;
+    g.gain.setValueAtTime(.05,t);g.gain.exponentialRampToValueAtTime(.0001,t+.04);
+    o.connect(g);g.connect(ac.destination);o.start(t);o.stop(t+.05);
+  }catch(e){}
+}
+function spinTicks(){
+  [0,70,150,240,350,480,640,830].forEach(function(ms,i){setTimeout(function(){tickSound(1500-i*55);},ms);});
+}
+function spinWheel(){
+  if(spinning||!ready()) return;
+  if(REDUCE){deal();return;}
+  spinning=true;ensureAudio();spinTicks();
+  var btn=$("deal"),ws=btn.querySelectorAll(".w"),i;
+  for(i=0;i<ws.length;i++) ws[i].style.setProperty("--i",i);
+  btn.classList.remove("spinning");void btn.offsetWidth;btn.classList.add("spinning");
+  setTimeout(function(){
+    btn.classList.remove("spinning");spinning=false;deal();
+  },950);
+}
+$("deal").addEventListener("click",spinWheel);
+
+/* ---------- Save and load ---------- */
+var slOpener=null;
+function exportData(){
+  return {app:"workout-roulette",v:1,saved:new Date().toISOString(),focus:S.focus.slice(),equip:S.equip.slice(),same:!!S.same,
+    rounds:workout.map(function(rd){return rd.map(function(w){return w.ex.n;});})};
+}
+function slSay(msg){$("slMsg").textContent=msg;}
+function makeCode(){return "WR1."+btoa(JSON.stringify(exportData()));}
+function parseSaved(text){
+  text=String(text||"").trim();
+  if(!text) return null;
+  try{
+    if(text.charAt(0)==="{") return JSON.parse(text);
+    return JSON.parse(atob(text.replace(/^WR1\./,"").replace(/\s+/g,"")));
+  }catch(e){return null;}
+}
+function importData(d){
+  var bad="That doesn't look like a saved Workout Roulette workout.";
+  if(!d||d.app!=="workout-roulette"||!Array.isArray(d.rounds)||!Array.isArray(d.focus)||d.focus.length!==SLOTS) return bad;
+  var i,r,s;
+  for(i=0;i<SLOTS;i++){if(!LABEL[d.focus[i]]) return bad;}
+  if(d.rounds.length!==1&&d.rounds.length!==ROUNDS) return bad;
+  var byName={};EX.forEach(function(x){byName[x.n]=x;});
+  var rounds=[],equip=Array.isArray(d.equip)?d.equip.filter(function(e){return EQUIP.some(function(q){return q.id===e;});}):[];
+  for(r=0;r<d.rounds.length;r++){
+    var rd=d.rounds[r];
+    if(!Array.isArray(rd)||rd.length!==SLOTS) return bad;
+    var row=[];
+    for(s=0;s<SLOTS;s++){
+      var ex=byName[rd[s]];
+      if(!ex||ex.g!==d.focus[s]) return "That workout includes an exercise this version doesn't recognize.";
+      if(ex.eq!=="none"&&equip.indexOf(ex.eq)<0) equip.push(ex.eq);
+      row.push({ex:ex,held:false});
+    }
+    rounds.push(row);
+  }
+  S.focus=d.focus.slice();S.equip=equip;S.same=d.rounds.length===1;
+  workout=rounds;
+  freshSet={};
+  for(r=0;r<rounds.length;r++){for(s=0;s<SLOTS;s++){freshSet[r+"-"+s]=1;}}
+  save();renderControls();render();
+  return "";
+}
+function downloadFile(name,text){
+  try{
+    var url=URL.createObjectURL(new Blob([text],{type:"application/json"}));
+    var a=document.createElement("a");a.href=url;a.download=name;a.style.display="none";
+    document.body.appendChild(a);a.click();document.body.removeChild(a);
+    setTimeout(function(){URL.revokeObjectURL(url);},1500);
+    return true;
+  }catch(e){return false;}
+}
+function openSL(mode){
+  slOpener=document.activeElement;slSay("");
+  var save=mode==="save";
+  $("slTitle").textContent=save?"Save workout":"Load workout";
+  $("slNote").textContent=save?"Keep this workout so you can load it again later or on another device.":"Load a workout you saved earlier.";
+  $("slSaveBox").hidden=!save;$("slLoadBox").hidden=save;$("slOut").hidden=true;
+  $("sl").hidden=false;$("slClose").focus();
+}
+function closeSL(){
+  $("sl").hidden=true;
+  if(slOpener&&slOpener.focus) slOpener.focus();
+}
+function finishLoad(text){
+  var err=importData(parseSaved(text));
+  if(err){slSay(err);return;}
+  $("slCode").value="";closeSL();toast("Workout loaded.");
+}
+$("saveBtn").addEventListener("click",function(){openSL("save");});
+$("loadBtn").addEventListener("click",function(){openSL("load");});
+$("slClose").addEventListener("click",closeSL);
+$("sl").addEventListener("click",function(e){if(e.target===this) closeSL();});
+$("slSave").addEventListener("click",function(){
+  var d=new Date(),stamp=d.getFullYear()+"-"+("0"+(d.getMonth()+1)).slice(-2)+"-"+("0"+d.getDate()).slice(-2);
+  var name="workout-roulette-"+stamp+".json";
+  var ok=downloadFile(name,JSON.stringify(exportData(),null,1));
+  slSay(ok?"Saved as "+name+". If nothing downloaded, use Copy a code instead.":"Couldn't save a file here. Use Copy a code instead.");
+});
+$("slCopy").addEventListener("click",function(){
+  var code=makeCode();
+  function manual(){
+    $("slOut").value=code;$("slOut").hidden=false;
+    try{$("slOut").select();}catch(e){}
+    slSay("Couldn't copy automatically. The code is in the box below, so copy it from there.");
+  }
+  try{
+    if(navigator.clipboard&&navigator.clipboard.writeText){
+      navigator.clipboard.writeText(code).then(function(){slSay("Code copied. Paste it into this box on any device to load the workout.");},manual);
+    }else manual();
+  }catch(e){manual();}
+});
+$("slPick").addEventListener("click",function(){$("slFile").click();});
+$("slFile").addEventListener("change",function(){
+  var f=this.files&&this.files[0];if(!f) return;
+  var rd=new FileReader();
+  rd.onload=function(){finishLoad(String(rd.result));};
+  rd.onerror=function(){slSay("Couldn't read that file.");};
+  rd.readAsText(f);
+  this.value="";
+});
+$("slLoad").addEventListener("click",function(){finishLoad($("slCode").value);});
+
 /* ---------- Init ---------- */
 load();
+P.sound=S.sound;
 buildSlots();
 $("slots").addEventListener("change",function(e){
   var sel=e.target;if(!sel||sel.dataset.slot===undefined) return;
